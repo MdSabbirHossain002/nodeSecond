@@ -6,6 +6,11 @@ const jwt = require("jsonwebtoken");
 const env = require("dotenv").config();
 var cookieParser = require('cookie-parser');
 
+// internal imports
+const {getSignup, signupController} = require('../controller/signupController')
+const { getLogin, login, logout } = require("../controller/loginController");
+const decorateHtmlResponse = require('../middlewares/common/decorateHtmlResponse')
+const {doLoginValidators, doLoginValidationHandler} = require('../middlewares/login/loginvalidators')
 const router = express.Router();
 const userSchema = require("../schemas/userSchema");
 const User = new mongoose.model("User", userSchema);
@@ -14,14 +19,10 @@ router.use(bodyParser.urlencoded({ extended: false }));
 router.use(bodyParser.json());
 router.use(cookieParser());
 
-router.get('/signup',(req,res)=>{
-  res.render('../views/signup/signup');
-})
-router.get('/login',(req,res)=>{
-  res.render('../views/login/login');
-})
 
-//signup 
+const page_title = 'Login Page'
+router.get('/login',decorateHtmlResponse(page_title), getLogin);
+
 const authorization = (req, res, next) => {
   const token = req.cookies.access_token;
   console.log(token);
@@ -44,35 +45,13 @@ const authorization = (req, res, next) => {
 router.get("/protected", authorization, (req, res) => {
   return res.json({ user: { 'id': req.userId } });
 });
-router.post('/signup', async (req,res)=>{
-  const user = await User.find({ email: req.body.email });
-  console.log(user);
-  if (!user.length > 1) {
-    try {
-      const hashedPassword = await bcrypt.hash(req.body.password, 10);
-      const newUser = new User({
-          username: req.body.username,
-          email: req.body.email,
-          password: hashedPassword,
-      });
-      await newUser.save();
-      res.redirect('/user/login');
-  
-      console.log('signup was successfull!!!');
-      
-    } catch {
-        res.status(500).json({
-            message: "Signup failed!",
-        });
-    }
-  }
-  
-  
+//signup 
 
-});
+router.get('/signup',getSignup)
+router.post('/signup',signupController);
 
 // LOGIN
-router.post("/login", async(req, res) => {
+router.post("/login",doLoginValidators,doLoginValidationHandler, async(req, res) => {
   try {
       const user = await User.findOne({ email: req.body.email });
       //console.log(user);
@@ -87,7 +66,7 @@ router.post("/login", async(req, res) => {
                 secure: process.env.NODE_ENV === "production",
               })
               .status(200)
-              .json({ message: "Logged in successfully 😊 👌" });
+              .json({ message: "Logged in successfully :) " });
             
         } else {
             console.log('not valided or token problem');
@@ -96,7 +75,7 @@ router.post("/login", async(req, res) => {
           });
         }
       }else{
-          res.send('user length problem')
+          res.send('User Not Found!!!')
       }
       
   } catch {
@@ -107,7 +86,6 @@ router.post("/login", async(req, res) => {
 });
 
 router.get("/deleteall", async (req, res,next) => {
-  res.send('all data deleted');
 
   User.deleteMany({},(err,resObj)=>{
   if (err) {
@@ -115,7 +93,14 @@ router.get("/deleteall", async (req, res,next) => {
     next(err)
   } else {
     res.send(resObj);
+  res.send('all data deleted');
+
   }});
+});
+router.get("/findall", async (req, res,next) => {
+  const filter = {};
+  const all = await User.find(filter);
+  res.send(all);
 });
 
 module.exports = router;

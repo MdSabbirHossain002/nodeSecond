@@ -1,10 +1,8 @@
-const mongoose = require("mongoose");
+const createError = require("http-errors");
 const bcrypt = require("bcrypt");
 
 // internal imports
-const userSchema = require("../schemas/userSchema");
-const User = new mongoose.model("User", userSchema);
-
+const User = require("../models/User");
 
 const signupController = async (req,res)=>{
     
@@ -32,7 +30,7 @@ const signupController = async (req,res)=>{
         });
     }
   }else{
-    res.send('this email or username already used.')
+    throw createError("this email or username already used.");
   }
 
 }

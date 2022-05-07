@@ -1,6 +1,8 @@
 let express = require("express")
 let app = express()
 let usersRouter = require('./routers/user.route')
+let signupRouter = require('./routers/signup.route')
+
 let mongoose = require('mongoose')
 // database connection with mongoose
 mongoose
@@ -12,6 +14,7 @@ mongoose
   .catch((err) => console.log(err));
 app.set('view engine', 'ejs');
 app.use("/user", usersRouter);
+app.use("/user", signupRouter);
 // //app.use("/", mongodbRouter);
 // app.use('/todo',todos)
 

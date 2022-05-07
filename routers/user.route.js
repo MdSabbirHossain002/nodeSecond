@@ -7,21 +7,15 @@ const env = require("dotenv").config();
 var cookieParser = require('cookie-parser');
 
 // internal imports
-const {getSignup, signupController} = require('../controller/signupController')
 const { getLogin, login, logout } = require("../controller/loginController");
 const decorateHtmlResponse = require('../middlewares/common/decorateHtmlResponse')
 const {doLoginValidators, doLoginValidationHandler} = require('../middlewares/login/loginvalidators')
 const router = express.Router();
-const userSchema = require("../schemas/userSchema");
-const User = new mongoose.model("User", userSchema);
+const User = require("../models/User");
 
-router.use(bodyParser.urlencoded({ extended: false }));
-router.use(bodyParser.json());
+// router.use(bodyParser.urlencoded({ extended: false }));
+// router.use(bodyParser.json());
 router.use(cookieParser());
-
-
-const page_title = 'Login Page'
-router.get('/login',decorateHtmlResponse(page_title), getLogin);
 
 const authorization = (req, res, next) => {
   const token = req.cookies.access_token;
@@ -45,12 +39,13 @@ const authorization = (req, res, next) => {
 router.get("/protected", authorization, (req, res) => {
   return res.json({ user: { 'id': req.userId } });
 });
-//signup 
 
-router.get('/signup',getSignup)
-router.post('/signup',signupController);
 
 // LOGIN
+
+const page_title = 'Login Page'
+router.get('/login',decorateHtmlResponse(page_title), getLogin);
+
 router.post("/login",doLoginValidators,doLoginValidationHandler, async(req, res) => {
   try {
       const user = await User.findOne({ email: req.body.email });
@@ -59,11 +54,20 @@ router.post("/login",doLoginValidators,doLoginValidationHandler, async(req, res)
         const isValidPassword = await bcrypt.compare(req.body.password, user.password);
         if (isValidPassword) {
             console.log('valided');
-            const token = jwt.sign({'user':user.username}, process.env.JWT_SECRET);
+            const userObj = {
+              userid: user_id,
+              username: user.username,
+              email:user.email,
+            }
+            const token = jwt.sign(userObj, process.env.JWT_SECRET,{
+              expiresIn: process.env.JWT_EXPIRY,
+            });
             return res
-              .cookie("access_token", token, {
+              .cookie(process.env.COOKIE_NAME, token, {
+                maxAge: process.env.JWT_EXPIRY,
                 httpOnly: true,
                 secure: process.env.NODE_ENV === "production",
+                signed: true,
               })
               .status(200)
               .json({ message: "Logged in successfully :) " });

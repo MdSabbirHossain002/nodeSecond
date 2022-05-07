@@ -19,5 +19,6 @@ const userSchema = mongoose.Schema({
     default:'inactive',
   }
 });
+const User = new mongoose.model("User", userSchema);
 
-module.exports = userSchema;
+module.exports = User;

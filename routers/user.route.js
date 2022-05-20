@@ -15,7 +15,7 @@ const User = require("../models/User");
 
 // router.use(bodyParser.urlencoded({ extended: false }));
 // router.use(bodyParser.json());
-router.use(cookieParser());
+router.use(cookieParser('cookie secret'));
 
 const authorization = (req, res, next) => {
   const token = req.cookies.access_token;
@@ -45,32 +45,38 @@ router.get("/protected", authorization, (req, res) => {
 
 const page_title = 'Login Page'
 router.get('/login',decorateHtmlResponse(page_title), getLogin);
+// router.get('/test',decorateHtmlResponse('test'), (req,res)=>{
+//   res.cookie(process.env.COOKIE_NAME, "i am cookie",{
+//     maxAge: process.env.JWT_EXPIRY,
+//     //httpOnly: true,
+//     //secure: process.env.NODE_ENV === "production",
+//     signed: true,
+//   },"password").status(200).json({ message: "cookie is inserted " });
+// });
 
 router.post("/login",doLoginValidators,doLoginValidationHandler, async(req, res) => {
   try {
       const user = await User.findOne({ email: req.body.email });
-      //console.log(user);
+      console.log("users with provided email:"+user);
       if(user) {
         const isValidPassword = await bcrypt.compare(req.body.password, user.password);
         if (isValidPassword) {
             console.log('valided');
             const userObj = {
-              userid: user_id,
+              userid: user._id,
               username: user.username,
               email:user.email,
             }
             const token = jwt.sign(userObj, process.env.JWT_SECRET,{
               expiresIn: process.env.JWT_EXPIRY,
             });
-            return res
-              .cookie(process.env.COOKIE_NAME, token, {
-                maxAge: process.env.JWT_EXPIRY,
-                httpOnly: true,
-                secure: process.env.NODE_ENV === "production",
-                signed: true,
-              })
-              .status(200)
-              .json({ message: "Logged in successfully :) " });
+            console.log('token: '+token);
+            return res.cookie(process.env.COOKIE_NAME, token, {
+              maxAge: process.env.JWT_EXPIRY,
+              httpOnly: true,
+              secure: process.env.NODE_ENV === "production",
+              signed: true,
+            }).status(200).send('you are logged in');
             
         } else {
             console.log('not valided or token problem');
@@ -84,7 +90,7 @@ router.post("/login",doLoginValidators,doLoginValidationHandler, async(req, res)
       
   } catch {
       res.status(401).json({
-          "error": 'first err',
+          "error": 'login catch error',
       });
   }
 });

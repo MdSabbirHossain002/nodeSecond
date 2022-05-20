@@ -1,8 +1,13 @@
 let express = require("express")
 let app = express()
+const bodyParser = require("body-parser")
+
 let usersRouter = require('./routers/user.route')
 let signupRouter = require('./routers/signup.route')
+let inboxRouter = require('./routers/inbox.route')
 
+app.use(bodyParser.urlencoded({ extended: false }));
+app.use(bodyParser.json());
 let mongoose = require('mongoose')
 // database connection with mongoose
 mongoose
@@ -15,6 +20,11 @@ mongoose
 app.set('view engine', 'ejs');
 app.use("/user", usersRouter);
 app.use("/user", signupRouter);
+app.get('/',(req,res)=>{
+  res.render('index');
+})
+
+app.use('/', inboxRouter);
 // //app.use("/", mongodbRouter);
 // app.use('/todo',todos)
 
@@ -26,6 +36,6 @@ const errorHandler = (err, req, res, next) => {
     res.status(500).json({ error: err });
   }
   
-app.use(errorHandler);
+//app.use(errorHandler);
 
 module.exports = app;

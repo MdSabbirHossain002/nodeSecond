@@ -8,7 +8,7 @@ const errorHandler = (err, req, res, next) => {
     res.status(500).json({ error: err });
   }
   
-  app.use(errorHandler);
+ // app.use(errorHandler);
 app.listen((PORT), () => {
     console.log(`server is running at port http://localhost:${PORT}`);
 });

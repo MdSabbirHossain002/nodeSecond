@@ -5,6 +5,8 @@ const bodyParser = require("body-parser")
 let usersRouter = require('./routers/user.route')
 let signupRouter = require('./routers/signup.route')
 let inboxRouter = require('./routers/inbox.route')
+let loginRouter = require('./routers/login.route')
+
 
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.json());
@@ -19,6 +21,7 @@ mongoose
   .catch((err) => console.log(err));
 app.set('view engine', 'ejs');
 app.use("/user", usersRouter);
+app.use("/user", loginRouter);
 app.use("/user", signupRouter);
 app.get('/',(req,res)=>{
   res.render('index');
